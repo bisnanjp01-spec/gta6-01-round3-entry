@@ -1,84 +1,62 @@
-# Port Azura — Open-World Crime Game
+# Lantern Bay — An Open-World Crime Story
 
-![Port Azura](https://img.shields.io/badge/game-open%20world-brightgreen)
-![Players](https://img.shields.io/badge/players-1-blue)
-![Offline](https://img.shields.io/badge/offline-static%20files-orange)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/bisnanjp01-spec/gta6-01-round3-entry/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/bisnanjp01-spec/gta6-01-round3-entry/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-**Port Azura** is a complete open-world crime game in the spirit of GTA 6, built
-from static files and playable offline in a desktop browser. You are **Mara Voss**,
-a courier with a fast car and faster enemies, working six jobs across a sun-soaked
-coastal city — stealing cars, outrunning the Azura Police Department, and taking
-the crown of Port Azura.
+Bounty: https://make.fun/bounty/gta6-01
 
-Everything is original: the city, the characters, the vehicles, the story, the art
-and the synthesized sounds. Nothing is taken from Rockstar's GTA or any other
-commercial game.
+**Lantern Bay** is a complete open-world crime game that runs offline in a desktop browser. You are Ezra Cole, a broke garage mechanic who takes six jobs from the crews of Lantern Bay — a sun-soaked coastal city you can explore on foot and by car — and ends up running the whole town.
 
 ## What is in the game
 
-- **A city to explore** — Port Azura: five districts (Old Town, Downtown, Marina Bay,
-  Harbor South, Palm Heights), a beach and pier, parks, a stadium and a harbor.
-- **On foot and by car** — walk, sprint, steal any parked or traffic car, drive with
-  acceleration, steering and a handbrake.
-- **Traffic and pedestrians** — cars follow the road grid and turn at intersections;
-  pedestrians stroll the sidewalks and panic when shots ring out.
-- **Wanted level and police** — 0–5 stars. The APD sends patrol cars that chase and
-  ram, and officers on foot at higher levels. Lay low and the heat fades; get caught
-  on foot and you are busted.
-- **Missions and a story** — six jobs: a delivery, a car theft, losing the cops, a
-  gang shootout at Cafe Lumen, the Bank of Azura heist, and the final run to Sunset Pier.
-- **Combat** — mouse-aim shooting, punching, health / armor / ammo pickups, enemy
-  health bars and gang crews that fight back.
-- **HUD with minimap** — cash, health, armor, ammo, wanted stars, mission objective
-  with distance, and a live minimap with the mission marker, cop blips and player arrow.
-- **Start screen and save** — start screen with story and controls, pause menu, and
-  saving to the browser (localStorage) — progress survives a reload.
-- **Sound, all synthesized** — engine hum, police sirens, gunshots, pickups and a
-  sunset bass groove, made with WebAudio. No audio files, no network.
+- **A city to explore** — Lantern Bay: Old Town, Downtown, the Night Market, the Docks, the Marina and the Hills, with roads, traffic, pedestrians, parks, a beach and the sea.
+- **Driving and stealing** — traffic cars, parked cars, a gold coupe to steal, arcade driving with collisions, damage and smoke.
+- **Wanted level and police** — 5 stars, police pursuit cars with flashing light bars and sirens that ram you, bust you on foot, and give up when you lose them.
+- **Missions and a story** — 6 story jobs with briefings, objectives, a timed delivery run, shootouts with rival crews, and a final confrontation at the Marlowe Hotel. Cash rewards, progression, free roam after the story.
+- **Combat** — mouse aim, click to shoot, reload, enemy guards who shoot back, bullets, particles and a health system.
+- **HUD and minimap** — cash, health, wanted stars, mission objective banner, speedometer, and a live minimap with the mission marker, police dots and the player arrow.
+- **Start screen and save** — title menu with New Game / Continue / How to Play; progress auto-saves to localStorage.
+- **Sound and polish** — fully synthesised WebAudio: engine hum, police sirens, gunshots, crashes, pickups and a bassline loop. No audio files, no network requests.
+- **Deterministic** — fixed seed (20261124) and a fixed 60 Hz timestep, so every run plays the same city the same way.
 
-## How to play
+## How to run it
 
-Open `game/index.html` from any static file server (for example `node serve.ts`
-in the kit, or `python3 -m http.server` inside `game/`) and play in desktop Chrome.
+Play in a browser (Node 22+ for the entrypoint):
 
-| Key | Action |
-| --- | --- |
-| W A S D / arrows | Walk / drive, steer |
-| E | Enter / steal a car, exit a car |
-| Mouse + Click | Aim and shoot |
-| F | Punch |
-| Shift | Sprint |
-| Space | Handbrake |
-| N | Start the next job |
-| S | Save the game |
-| P / Esc | Pause |
-| M | Mute |
+```sh
+node main.ts
+```
 
-## Screenshot states
+`main.ts` runs a headless scripted driving session twice, checks the two runs are byte-identical, then copies `game/` and `screenshots/` to the output directory (`/output`, or `$MAKEFUN_OUTPUT_DIR`) and writes `dossier.json` there.
 
-The game supports deterministic scene presets for captures via URL query params:
+Or play the game directly — serve `game/` with any static server and open `game/index.html`:
 
-- `?shot=cover` — on foot at Azura Plaza, first mission active
-- `?shot=drive` — driving the Azura GT down Harbor Avenue
-- `?shot=chase` — three-star police chase
-- `?shot=mission` — the Cafe Lumen gang shootout
+```sh
+cd game && python3 -m http.server 8080
+# open http://localhost:8080 in desktop Chrome
+```
 
-## Structure
+## Controls
 
-- `game/index.html` — the playable page and HUD
-- `game/src/rng.js` — seeded RNG and math helpers
-- `game/src/city.js` — city generation, districts, collision
-- `game/src/audio.js` — WebAudio synthesized sound and music
-- `game/src/player.js` — Mara on foot and behind the wheel, combat
-- `game/src/traffic.js` — traffic cars and pedestrians
-- `game/src/police.js` — wanted level, cop cars and officers
-- `game/src/missions.js` — the six-job story
-- `game/src/hud.js` — HUD, minimap, menus
-- `game/src/main.js` — game loop, camera, rendering, save/load
-- `main.ts` — entry program: copies `game/` + `screenshots/` to the output
-  dir and writes `dossier.json`
+- **WASD / arrows** — walk or drive
+- **E** — steal a car / step out
+- **Mouse + click** — aim and shoot on foot
+- **R** — reload
+- **Shift** — sprint
+- **P** — pause (auto-saves)
+- **M** — music on/off
 
-## License
+## Files
 
-MIT — see `LICENSE`.
+- `game/index.html` — the page
+- `game/src/rng.js` — deterministic seeded RNG
+- `game/src/city.js` — the map of Lantern Bay
+- `game/src/audio.js` — synthesised WebAudio sound
+- `game/src/entities.js` — player, traffic, pedestrians, police, bullets
+- `game/src/missions.js` — the story and the six jobs
+- `game/src/hud.js` — HUD and minimap
+- `game/src/game.js` — main loop, camera, rendering, saving
+- `main.ts` — the entrypoint (headless session + dossier)
+
+Built for the [gta6-01 bounty on make.fun](https://make.fun/bounty/gta6-01). Referral code: `qk4dawkj`.

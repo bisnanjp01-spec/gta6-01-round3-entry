@@ -1,161 +1,242 @@
-// missions.js — Mara's story: six jobs across Port Azura, each a chain of
-// objectives (drive somewhere, steal a car, lose the cops, fight, deliver).
-// Completing a mission pays cash, unlocks the next one and saves the game.
-const MISSION_DEFS = [
+// missions.js — the story of Ezra Cole and the six jobs that take him
+// from a broke garage mechanic to the name every crew in Lantern Bay
+// knows. Each mission is a short list of objectives the game tracks.
+
+var STORY_INTRO = 'Ezra Cole fixed other people\'s cars for five years and stayed broke. ' +
+  'Tonight the crews of Lantern Bay start paying him to drive, steal and fight instead. ' +
+  'Six jobs. One city. No going back.';
+
+var MISSIONS = [
   {
-    id: "m1", title: "1 · First Delivery",
-    intro: "Rico needs a package at Azura Plaza. Take any car — or walk — and get it there.",
-    steps: [
-      { kind: "goto", x: 1000, y: 800, label: "Deliver the package to Azura Plaza", radius: 70 },
-    ],
+    id: 'first-fare',
+    title: '1 — First Fare',
     reward: 400,
+    briefing: 'Old Sal at the docks has a package that needs to reach the Marina Pier before midnight. Take the sedan outside the garage, drive to the docks, grab the package, and deliver it. Easy money. Probably.',
+    steps: [
+      { type: 'goto', x: 530, y: 2145, radius: 90, text: 'Drive to the Fisherman Docks and pick up the package' },
+      { type: 'goto', x: 3120, y: 920, radius: 90, text: 'Deliver the package to Marina Pier' }
+    ]
   },
   {
-    id: "m2", title: "2 · Hot Wheels",
-    intro: "A client wants a Sundown, any Sundown. Steal one and bring it to Rico's Garage.",
+    id: 'hot-wheels',
+    title: '2 — Hot Wheels',
+    reward: 700,
+    briefing: 'A customer wants a gold coupe that parks outside the Gilded Lantern most nights. Steal it — walk up and press E — and bring it back to Cole\'s Garage. The valet will not be thrilled. The police might notice.',
     steps: [
-      { kind: "steal", label: "Steal a car (walk up to one and press E)", radius: 0 },
-      { kind: "deliver", x: 600, y: 1800, label: "Deliver the stolen car to Rico's Garage", radius: 80 },
-    ],
+      { type: 'steal', x: 1470, y: 1000, radius: 60, text: 'Steal the gold coupe outside the Gilded Lantern (press E)' },
+      { type: 'goto', x: 555, y: 530, radius: 90, text: 'Bring the coupe back to Cole\'s Garage' }
+    ]
+  },
+  {
+    id: 'dockside',
+    title: '3 — Dockside Trouble',
     reward: 900,
+    briefing: 'The Marlowe crew jumped Sal\'s men at the docks and took a crate of parts that belongs to the garage. Go on foot, deal with the four rivals guarding the crate, and take it back. Aim with the mouse, click to shoot.',
+    steps: [
+      { type: 'combat', x: 530, y: 2145, radius: 260, count: 4, text: 'Clear out the Marlowe rivals at the docks (0/4)' },
+      { type: 'goto', x: 555, y: 530, radius: 90, text: 'Bring the crate back to Cole\'s Garage' }
+    ]
   },
   {
-    id: "m3", title: "3 · Heat on the Pier",
-    intro: "The APD is onto Rico's crew. Draw the heat, then lose them — get your wanted level to zero.",
-    steps: [
-      { kind: "heat", label: "Make some noise — raise your wanted level to 2 stars", radius: 0 },
-      { kind: "lose", label: "Now lose the cops: get wanted back to 0", radius: 0 },
-    ],
+    id: 'getaway',
+    title: '4 — The Getaway',
     reward: 1200,
+    briefing: 'The hotel job went loud. You have the payout, the whole Lantern Bay PD is on you, and the safehouse is across town. Three stars, one car, no mistakes. Reach the safehouse and lose them.',
+    steps: [
+      { type: 'escape', x: 575, y: 1295, radius: 100, text: 'Reach the safehouse with the payout — lose the police!' }
+    ]
   },
   {
-    id: "m4", title: "4 · The Informant",
-    intro: "A snitch is meeting the Harbor Kings at Cafe Lumen. Go there and shut the meeting down.",
+    id: 'night-market',
+    title: '5 — Night Market Run',
+    reward: 1500,
+    briefing: 'Three drops, one night, no questions. The market crew pays by the minute, so keep moving: the hospital corner, the old town square, then the marina. A timer is running.',
     steps: [
-      { kind: "goto", x: 2200, y: 1400, label: "Reach Cafe Lumen", radius: 70 },
-      { kind: "defeat", x: 2200, y: 1400, count: 3, label: "Deal with the Harbor Kings crew (3)", radius: 0 },
-    ],
-    reward: 1800,
+      { type: 'timed', x: 2260, y: 620, radius: 90, time: 150, text: 'Drop 1/3: St. Anselm Hospital corner' },
+      { type: 'timed', x: 420, y: 420, radius: 90, time: 150, text: 'Drop 2/3: Old Town square' },
+      { type: 'timed', x: 3120, y: 920, radius: 90, text: 'Drop 3/3: Marina Pier' }
+    ]
   },
   {
-    id: "m5", title: "5 · Bank of Azura",
-    intro: "The big one. Hit the Bank of Azura, grab the cash, and outrun a 4-star response.",
+    id: 'king',
+    title: '6 — King of Lantern Bay',
+    reward: 2500,
+    briefing: 'Vince Marlowe runs this city from the top floor of his hotel, and he put the price on your head. Walk into the Marlowe Hotel, finish his six guards, and the city is yours. This is the last job.',
     steps: [
-      { kind: "goto", x: 1400, y: 1000, label: "Reach the Bank of Azura", radius: 70 },
-      { kind: "grab", x: 1400, y: 1000, label: "Grab the cash (stand in the bank doorway)", radius: 0 },
-      { kind: "escape", x: 1000, y: 2250, label: "Escape to the Harbor Docks", radius: 90 },
-    ],
-    reward: 5000,
-  },
-  {
-    id: "m6", title: "6 · Queen of Port Azura",
-    intro: "One last run: take the cash to Sunset Pier and prove the city is yours.",
-    steps: [
-      { kind: "deliver", x: 3050, y: 600, label: "Deliver the score to Sunset Pier", radius: 80 },
-    ],
-    reward: 8000,
-  },
+      { type: 'combat', x: 1860, y: 1305, radius: 280, count: 6, text: 'Fight through Marlowe\'s guards at the hotel (0/6)' },
+      { type: 'goto', x: 555, y: 530, radius: 90, text: 'Return to Cole\'s Garage — King of Lantern Bay' }
+    ]
+  }
 ];
 
-function createMissions() {
-  return {
-    defs: MISSION_DEFS,
-    index: 0, step: 0, active: false,
-    grabbed: false, defeatLeft: 0,
-    done: false,
-  };
-}
+var MissionState = {
+  index: 0,
+  step: 0,
+  active: false,
+  done: false,
+  defeated: 0,
+  timer: 0,
+  enemies: [],
+  banner: '',
+  bannerTimer: 0,
+  completedCount: 0
+};
 
-function currentMission(missions) {
-  if (missions.index >= missions.defs.length) return null;
-  return missions.defs[missions.index];
-}
+MissionState.start = function (index, game) {
+  this.index = index;
+  this.step = 0;
+  this.active = true;
+  this.done = false;
+  this.defeated = 0;
+  this.timer = 0;
+  this.enemies = [];
+  var m = MISSIONS[index];
+  this.showBanner(m.title + ' — ' + m.briefing);
+  this.enterStep(game);
+};
 
-function currentStep(missions) {
-  const m = currentMission(missions);
+MissionState.current = function () {
+  return MISSIONS[this.index];
+};
+
+MissionState.currentStep = function () {
+  var m = this.current();
   if (!m) return null;
-  return m.steps[missions.step] || null;
-}
+  return m.steps[this.step] || null;
+};
 
-function startMission(missions, game) {
-  const m = currentMission(missions);
-  if (!m) { missions.done = true; return; }
-  missions.active = true;
-  missions.step = 0;
-  missions.grabbed = false;
-  const step = currentStep(missions);
-  missions.defeatLeft = step && step.kind === "defeat" ? step.count : 0;
-  game.message(m.title + " — " + m.intro);
-  game.setObjective(m.title, step ? step.label : "", null);
-  SoundEngine.pickup();
-}
+MissionState.objectiveText = function () {
+  if (!this.active) return this.done ? 'Story complete — Lantern Bay is yours. Free roam!' : 'No active mission. Press M to see the story.';
+  var step = this.currentStep();
+  if (!step) return '';
+  if (step.type === 'combat') return step.text.replace(/\(\d+\/\d+\)/, '(' + this.defeated + '/' + step.count + ')');
+  if (step.type === 'timed' && this.timer > 0) return step.text + ' — ' + Math.ceil(this.timer) + 's left';
+  return step.text;
+};
 
-function advanceMissionStep(missions, game) {
-  const m = currentMission(missions);
-  missions.step++;
-  if (missions.step >= m.steps.length) {
-    completeMission(missions, game);
-    return;
-  }
-  const step = currentStep(missions);
-  missions.defeatLeft = step.kind === "defeat" ? step.count : 0;
-  missions.grabbed = false;
-  if (step.kind === "defeat") game.spawnGangCrew(step.x, step.y, step.count);
-  game.setObjective(m.title, step.label, step);
-  game.message("Next: " + step.label);
-  SoundEngine.pickup();
-}
+MissionState.showBanner = function (text) {
+  this.banner = text;
+  this.bannerTimer = 6;
+};
 
-function completeMission(missions, game) {
-  const m = currentMission(missions);
-  const player = game.player;
-  player.cash += m.reward;
-  player.missionsDone++;
-  game.message("Mission complete: " + m.title + "  +$" + m.reward);
-  game.showToast("MISSION COMPLETE  +$" + m.reward);
-  SoundEngine.missionDone();
-  missions.index++;
-  missions.active = false;
-  game.saveGame();
-  if (missions.index >= missions.defs.length) {
-    missions.done = true;
-    game.setObjective("Port Azura is yours", "You finished every job. Free roam — the city is yours, Mara.", null);
-    game.message("You are the Queen of Port Azura. Free roam unlocked.");
-  } else {
-    game.setObjective("Job done", "Press N for your next job, or keep exploring.", null);
-  }
-}
-
-// Called every frame; checks whether the current step's condition is met.
-function updateMissions(missions, dt, game) {
-  if (!missions.active) return;
-  const step = currentStep(missions);
+MissionState.enterStep = function (game) {
+  var step = this.currentStep();
   if (!step) return;
-  const player = game.player;
-  const dist = (step.x !== undefined) ? distanceBetween(player.x, player.y, step.x, step.y) : 1e9;
-  if (step.kind === "goto" || step.kind === "deliver" || step.kind === "escape") {
-    game.setObjective(currentMission(missions).title, step.label, step, Math.round(dist));
-    if (dist < step.radius) advanceMissionStep(missions, game);
-  } else if (step.kind === "steal") {
-    if (player.inCar && player.inCar.stolen) advanceMissionStep(missions, game);
-  } else if (step.kind === "heat") {
-    game.setObjective(currentMission(missions).title, step.label + "  (" + wantedStars(player) + "/2 stars)", step);
-    if (wantedStars(player) >= 2) advanceMissionStep(missions, game);
-  } else if (step.kind === "lose") {
-    game.setObjective(currentMission(missions).title, step.label + "  (" + wantedStars(player) + " stars)", step);
-    if (wantedStars(player) === 0) advanceMissionStep(missions, game);
-  } else if (step.kind === "defeat") {
-    game.setObjective(currentMission(missions).title,
-      step.label + "  (" + missions.defeatLeft + " left)", step);
-    if (missions.defeatLeft <= 0) advanceMissionStep(missions, game);
-  } else if (step.kind === "grab") {
-    game.setObjective(currentMission(missions).title, step.label, step);
-    if (dist < 90 && !missions.grabbed) {
-      missions.grabbed = true;
-      raiseWanted(player, 4);
-      game.message("Alarms! The APD is coming — run!");
-      SoundEngine.crash();
-      advanceMissionStep(missions, game);
+  this.defeated = 0;
+  this.enemies = [];
+  if (step.type === 'combat') {
+    var rng = new LanternRng(9000 + this.index * 100 + this.step);
+    var names = ['Rook', 'Fang', 'Brick', 'Sly', 'Vex', 'Hawk'];
+    for (var i = 0; i < step.count; i++) {
+      var a = rng.range(0, Math.PI * 2);
+      var r = rng.range(50, step.radius * 0.8);
+      this.enemies.push(makeEnemy(step.x + Math.cos(a) * r, step.y + Math.sin(a) * r, names[i % names.length]));
     }
   }
-}
+  if (step.type === 'escape') {
+    game.player.wanted = 3;
+  }
+  if (step.type === 'timed' && step.time) {
+    this.timer = step.time;
+  }
+  if (step.type === 'steal') {
+    game.ensureStealTarget(step.x, step.y);
+  }
+};
+
+MissionState.advance = function (game) {
+  var m = this.current();
+  this.step++;
+  if (this.step >= m.steps.length) {
+    game.player.cash += m.reward;
+    this.completedCount++;
+    this.showBanner('Job done! +' + '$' + m.reward + ' — ' + m.title + ' complete.');
+    AudioSys.blip(880);
+    this.active = false;
+    if (this.index + 1 < MISSIONS.length) {
+      this.index++;
+      var self = this;
+      setTimeout(function () { self.start(self.index, game); }, 2500);
+    } else {
+      this.done = true;
+      this.showBanner('KING OF LANTERN BAY — you finished the story. The city is yours.');
+    }
+  } else {
+    this.enterStep(game);
+  }
+};
+
+MissionState.update = function (dt, game) {
+  if (this.bannerTimer > 0) this.bannerTimer -= dt;
+  if (!this.active) return;
+  var step = this.currentStep();
+  if (!step) return;
+  var p = game.player;
+  if (step.type === 'timed' && this.timer > 0) {
+    this.timer -= dt;
+    if (this.timer <= 0) {
+      this.showBanner('Too slow — the drop window closed. Try the run again.');
+      this.active = false;
+      var self = this;
+      setTimeout(function () { self.start(self.index, game); }, 2000);
+      return;
+    }
+  }
+  if (step.type === 'goto' || step.type === 'timed') {
+    var d = Math.hypot(p.x - step.x, p.y - step.y);
+    if (d < step.radius) {
+      AudioSys.blip(990);
+      Particles.burst(step.x, step.y, '#ffd94a', 24, 160);
+      this.advance(game);
+    }
+  } else if (step.type === 'steal') {
+    if (p.car && p.car.model.name === 'Coupe' && p.car.color === '#d4af37') {
+      // The gold coupe is stolen; now drive it home.
+      this.advance(game);
+    }
+  } else if (step.type === 'combat') {
+    var alive = 0;
+    for (var i = 0; i < this.enemies.length; i++) {
+      if (this.enemies[i].alive) alive++;
+    }
+    this.defeated = step.count - alive;
+    if (alive === 0) this.advance(game);
+  } else if (step.type === 'escape') {
+    var dd = Math.hypot(p.x - step.x, p.y - step.y);
+    if (dd < step.radius && p.wanted === 0) {
+      this.advance(game);
+    }
+  }
+};
+
+// Enemy guards shoot at the player when close and alive.
+MissionState.updateEnemies = function (dt, game) {
+  for (var i = 0; i < this.enemies.length; i++) {
+    var e = this.enemies[i];
+    if (!e.alive) continue;
+    if (e.health <= 0) {
+      e.alive = false;
+      Particles.burst(e.x, e.y, '#c93a3a', 26, 180);
+      AudioSys.crash();
+      continue;
+    }
+    var p = game.player;
+    var dx = p.x - e.x;
+    var dy = p.y - e.y;
+    var d = Math.hypot(dx, dy);
+    e.angle = Math.atan2(dy, dx);
+    if (d > 320) {
+      e.x += Math.cos(e.angle) * e.speed * dt;
+      e.y += Math.sin(e.angle) * e.speed * dt;
+      collideBuildings(e, 12);
+    } else if (d < 200) {
+      e.shootTimer -= dt;
+      if (e.shootTimer <= 0) {
+        e.shootTimer = 1.8 + combatRng.float() * 1.0;
+        var spread = (combatRng.float() - 0.5) * 0.35;
+        Bullets.fire(e.x, e.y, e.angle + spread, false);
+        AudioSys.shot();
+      }
+    }
+  }
+};

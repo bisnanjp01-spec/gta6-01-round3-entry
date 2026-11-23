@@ -1,137 +1,174 @@
-// city.js — builds Port Azura: districts, road grid, buildings, parks, beach.
-// The city is generated once from the fixed seed, so every player explores the
-// same streets. Roads are axis-aligned avenues and streets; buildings fill the
-// blocks between them and are stored as rectangles for collision and drawing.
-const CITY_WIDTH = 3200;
-const CITY_HEIGHT = 2400;
-const ROAD_WIDTH = 92;
+// city.js — the map of Lantern Bay: roads, districts, buildings,
+// landmarks, water and the collision helpers every system shares.
+// The city is generated once from a fixed seed, so it never changes.
 
-const DISTRICTS = [
-  { name: "Old Town", x: 0, y: 0, w: 800, h: 1200, tint: "#c9a06a" },
-  { name: "Downtown", x: 800, y: 400, w: 1200, h: 1200, tint: "#7fa8c9" },
-  { name: "Marina Bay", x: 2000, y: 0, w: 1050, h: 1200, tint: "#6fc3c9" },
-  { name: "Harbor South", x: 0, y: 1200, w: 2000, h: 1200, tint: "#b08a5a" },
-  { name: "Palm Heights", x: 2000, y: 1200, w: 1050, h: 1200, tint: "#8fbf7f" },
+var WORLD_W = 3600;
+var WORLD_H = 2600;
+var ROAD_W = 96;
+
+var ROADS_X = [320, 760, 1200, 1640, 2080, 2520, 2960];
+var ROADS_Y = [300, 700, 1100, 1500, 1900, 2300];
+
+var DISTRICTS = [
+  { name: 'Old Town', x: 0, y: 0, w: 1000, h: 900, tint: '#c9a86a' },
+  { name: 'The Hills', x: 1000, y: 0, w: 1100, h: 900, tint: '#8fae7e' },
+  { name: 'Downtown', x: 1000, y: 900, w: 1100, h: 1000, tint: '#7e9cc4' },
+  { name: 'Night Market', x: 2100, y: 1900, w: 1100, h: 700, tint: '#d98a7a' },
+  { name: 'The Docks', x: 0, y: 1900, w: 1100, h: 700, tint: '#8a97a3' },
+  { name: 'Marina', x: 3200, y: 0, w: 400, h: 2600, tint: '#5fb3c9' }
 ];
 
-const AVENUE_X = [200, 600, 1000, 1400, 1800, 2200, 2600, 2950];
-const STREET_Y = [200, 600, 1000, 1400, 1800, 2150];
+var LANDMARKS = [
+  { id: 'garage', name: "Cole's Garage", x: 470, y: 470, w: 170, h: 120, color: '#e07a3f' },
+  { id: 'safehouse', name: 'Safehouse', x: 500, y: 1240, w: 150, h: 110, color: '#4f9d6d' },
+  { id: 'casino', name: 'The Gilded Lantern', x: 1300, y: 800, w: 220, h: 180, color: '#d4af37' },
+  { id: 'hospital', name: 'St. Anselm Hospital', x: 2190, y: 420, w: 220, h: 150, color: '#e8e8e8' },
+  { id: 'police', name: 'Lantern Bay PD', x: 880, y: 1620, w: 200, h: 140, color: '#3f6fb5' },
+  { id: 'market', name: 'Night Market', x: 2200, y: 2040, w: 200, h: 130, color: '#c95f7a' },
+  { id: 'docks', name: 'Fisherman Docks', x: 420, y: 2080, w: 220, h: 130, color: '#7a6a55' },
+  { id: 'marina', name: 'Marina Pier', x: 3060, y: 820, w: 150, h: 200, color: '#5fb3c9' },
+  { id: 'hotel', name: 'The Marlowe Hotel', x: 1760, y: 1230, w: 200, h: 150, color: '#9a6bc9' }
+];
 
-const CAR_COLORS = ["#d23b3b", "#3b7fd2", "#e8c33a", "#3ad27a", "#e8e8e8", "#22242a",
-  "#d2691e", "#8e44ad", "#19b5a6", "#f2f2f2", "#5a6b7a", "#c0392b"];
-const BUILDING_COLORS = ["#b98d5f", "#8fa3b8", "#c9b18a", "#7d8ea3", "#a8705a",
-  "#93a88f", "#b5a06a", "#6f86a3", "#c98f6a", "#9aa38f"];
+var BUILDING_COLORS = ['#b5764f', '#8a6f8f', '#5f7f9e', '#a89a6a', '#7d8a6a', '#96604f', '#6a8a8f', '#b58a5a'];
+var ROOF_COLORS = ['#6e4a3a', '#4a5a6e', '#5a6e4a', '#7a5a4a', '#3f4a5a'];
 
-function buildCity() {
-  const buildings = [];
-  const trees = [];
-  const parks = [];
-  const lamps = [];
-  // Buildings fill each block between neighbouring roads.
-  for (let ax = 0; ax < AVENUE_X.length - 1; ax++) {
-    for (let sy = 0; sy < STREET_Y.length - 1; sy++) {
-      const x0 = AVENUE_X[ax] + ROAD_WIDTH / 2 + 14;
-      const x1 = AVENUE_X[ax + 1] - ROAD_WIDTH / 2 - 14;
-      const y0 = STREET_Y[sy] + ROAD_WIDTH / 2 + 14;
-      const y1 = STREET_Y[sy + 1] - ROAD_WIDTH / 2 - 14;
-      if (x1 - x0 < 90 || y1 - y0 < 90) continue;
-      // One in six blocks is a park instead of buildings.
-      if (randChance(0.16)) {
-        parks.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
-        const n = Math.floor(((x1 - x0) * (y1 - y0)) / 9000);
-        for (let i = 0; i < n; i++) {
-          trees.push({ x: randRange(x0 + 20, x1 - 20), y: randRange(y0 + 20, y1 - 20), r: randRange(9, 15) });
-        }
-        continue;
-      }
-      const cols = randInt(1, 2), rows = randInt(1, 2);
-      const cw = (x1 - x0) / cols, ch = (y1 - y0) / rows;
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          const bx = x0 + c * cw + 8, by = y0 + r * ch + 8;
-          const bw = cw - 16, bh = ch - 16;
-          if (bw < 50 || bh < 50) continue;
-          const downtown = bx > 800 && bx < 2000 && by > 400 && by < 1600;
-          buildings.push({
-            x: bx, y: by, w: bw, h: bh,
-            height: downtown ? randInt(26, 64) : randInt(10, 30),
-            color: randPick(BUILDING_COLORS),
-            roof: randPick(["#5a6b7a", "#7a6a5a", "#4a5a6a", "#8a7a6a"]),
-            windows: randInt(2, 5),
-          });
-        }
-      }
-      if (randChance(0.5)) {
-        trees.push({ x: randRange(x0 + 20, x1 - 20), y: randRange(y0 + 20, y1 - 20), r: randRange(9, 14) });
-      }
-    }
-  }
-  // Street lamps along every avenue and street.
-  for (const ax of AVENUE_X) {
-    for (const sy of STREET_Y) {
-      lamps.push({ x: ax + ROAD_WIDTH / 2 + 6, y: sy - ROAD_WIDTH / 2 - 6 });
-    }
-  }
-  return {
-    width: CITY_WIDTH, height: CITY_HEIGHT,
-    buildings, trees, parks, lamps,
-    // Named landmarks the missions and HUD refer to.
-    landmarks: {
-      plaza: { x: 1000, y: 800, label: "Azura Plaza" },
-      pier: { x: 3050, y: 600, label: "Sunset Pier" },
-      bank: { x: 1400, y: 1000, label: "Bank of Azura" },
-      garage: { x: 600, y: 1800, label: "Rico's Garage" },
-      docks: { x: 1000, y: 2250, label: "Harbor Docks" },
-      cafe: { x: 2200, y: 1400, label: "Cafe Lumen" },
-      stadium: { x: 2600, y: 1800, label: "Azura Bowl" },
-      hideout: { x: 600, y: 200, label: "Mara's Hideout" },
-    },
-  };
-}
+var cityBuildings = [];
+var cityTrees = [];
+var cityParks = [
+  { x: 1300, y: 420, w: 260, h: 200 },
+  { x: 2600, y: 1200, w: 280, h: 220 },
+  { x: 800, y: 1600, w: 200, h: 180 }
+];
 
-function pointInBuilding(city, x, y, pad) {
-  for (const b of city.buildings) {
-    if (x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad) return b;
-  }
-  return null;
-}
-
-// Push a circle out of any building it overlaps; returns the building hit, if any.
-function collideCircleWithBuildings(city, ent, radius) {
-  for (const b of city.buildings) {
-    const cx = clampValue(ent.x, b.x, b.x + b.w);
-    const cy = clampValue(ent.y, b.y, b.y + b.h);
-    const dx = ent.x - cx, dy = ent.y - cy;
-    const d2 = dx * dx + dy * dy;
-    if (d2 < radius * radius) {
-      if (d2 > 0.01) {
-        const d = Math.sqrt(d2);
-        ent.x = cx + (dx / d) * radius;
-        ent.y = cy + (dy / d) * radius;
-      } else {
-        ent.y = b.y - radius;
-      }
-      return b;
-    }
-  }
-  return null;
+function isWater(x, y) {
+  return x >= 3300 || (x >= 3240 && y >= 0 && y <= WORLD_H);
 }
 
 function isOnRoad(x, y) {
-  for (const ax of AVENUE_X) if (Math.abs(x - ax) < ROAD_WIDTH / 2) return true;
-  for (const sy of STREET_Y) if (Math.abs(y - sy) < ROAD_WIDTH / 2) return true;
+  for (var i = 0; i < ROADS_X.length; i++) {
+    if (Math.abs(x - ROADS_X[i]) <= ROAD_W / 2) return true;
+  }
+  for (var j = 0; j < ROADS_Y.length; j++) {
+    if (Math.abs(y - ROADS_Y[j]) <= ROAD_W / 2) return true;
+  }
   return false;
 }
 
-function nearestRoadPoint(x, y) {
-  let best = null, bestD = 1e9;
-  for (const ax of AVENUE_X) {
-    const d = Math.abs(x - ax);
-    if (d < bestD) { bestD = d; best = { x: ax, y }; }
-  }
-  for (const sy of STREET_Y) {
-    const d = Math.abs(y - sy);
-    if (d < bestD) { bestD = d; best = { x, y: sy }; }
+function nearestRoadX(x) {
+  var best = ROADS_X[0];
+  for (var i = 1; i < ROADS_X.length; i++) {
+    if (Math.abs(ROADS_X[i] - x) < Math.abs(best - x)) best = ROADS_X[i];
   }
   return best;
+}
+
+function nearestRoadY(y) {
+  var best = ROADS_Y[0];
+  for (var j = 1; j < ROADS_Y.length; j++) {
+    if (Math.abs(ROADS_Y[j] - y) < Math.abs(best - y)) best = ROADS_Y[j];
+  }
+  return best;
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function buildCity(seed) {
+  var rng = new LanternRng(seed);
+  cityBuildings = [];
+  cityTrees = [];
+  for (var li = 0; li < LANDMARKS.length; li++) {
+    var lm = LANDMARKS[li];
+    cityBuildings.push({ x: lm.x, y: lm.y, w: lm.w, h: lm.h, color: lm.color, roof: '#2e2a33', landmark: lm.id, name: lm.name });
+  }
+  // Fill each road block with one or two buildings, leaving parks and
+  // landmark plots empty.
+  for (var xi = 0; xi < ROADS_X.length - 1; xi++) {
+    for (var yi = 0; yi < ROADS_Y.length - 1; yi++) {
+      var bx0 = ROADS_X[xi] + ROAD_W / 2 + 24;
+      var by0 = ROADS_Y[yi] + ROAD_W / 2 + 24;
+      var bx1 = ROADS_X[xi + 1] - ROAD_W / 2 - 24;
+      var by1 = ROADS_Y[yi + 1] - ROAD_W / 2 - 24;
+      if (bx1 - bx0 < 90 || by1 - by0 < 90) continue;
+      var block = { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 };
+      var blocked = false;
+      for (var p = 0; p < cityParks.length; p++) {
+        if (rectsOverlap(block, cityParks[p])) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      for (var l = 0; l < LANDMARKS.length; l++) {
+        if (rectsOverlap(block, LANDMARKS[l])) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      if (rng.chance(0.14)) {
+        // Empty lot with trees instead of a building.
+        var nt = rng.int(2, 5);
+        for (var t = 0; t < nt; t++) {
+          cityTrees.push({ x: rng.range(bx0 + 20, bx1 - 20), y: rng.range(by0 + 20, by1 - 20), r: rng.range(10, 18) });
+        }
+        continue;
+      }
+      var two = rng.chance(0.45) && block.w > 260;
+      if (two) {
+        var split = block.w * rng.range(0.42, 0.58);
+        cityBuildings.push({ x: block.x, y: block.y, w: split - 14, h: block.h, color: rng.pick(BUILDING_COLORS), roof: rng.pick(ROOF_COLORS), landmark: null, name: '' });
+        cityBuildings.push({ x: block.x + split + 14, y: block.y, w: block.w - split - 14, h: block.h, color: rng.pick(BUILDING_COLORS), roof: rng.pick(ROOF_COLORS), landmark: null, name: '' });
+      } else {
+        cityBuildings.push({ x: block.x, y: block.y, w: block.w, h: block.h, color: rng.pick(BUILDING_COLORS), roof: rng.pick(ROOF_COLORS), landmark: null, name: '' });
+      }
+      if (rng.chance(0.5)) {
+        cityTrees.push({ x: rng.range(bx0, bx1), y: by0 - 8, r: rng.range(9, 15) });
+      }
+    }
+  }
+  // Street trees along the marina road.
+  for (var s = 0; s < 14; s++) {
+    cityTrees.push({ x: 3120 + (s % 2) * 40, y: 140 + s * 170, r: 13 });
+  }
+}
+
+// Push a circle out of every building it overlaps. Returns true on hit.
+function collideBuildings(pos, radius) {
+  var hit = false;
+  for (var i = 0; i < cityBuildings.length; i++) {
+    var b = cityBuildings[i];
+    var cx = Math.max(b.x, Math.min(pos.x, b.x + b.w));
+    var cy = Math.max(b.y, Math.min(pos.y, b.y + b.h));
+    var dx = pos.x - cx;
+    var dy = pos.y - cy;
+    var d2 = dx * dx + dy * dy;
+    if (d2 < radius * radius) {
+      hit = true;
+      if (d2 > 0.0001) {
+        var d = Math.sqrt(d2);
+        pos.x = cx + (dx / d) * radius;
+        pos.y = cy + (dy / d) * radius;
+      } else {
+        pos.y = b.y - radius;
+      }
+    }
+  }
+  return hit;
+}
+
+function clampToWorld(pos, margin) {
+  pos.x = Math.max(margin, Math.min(WORLD_W - margin, pos.x));
+  pos.y = Math.max(margin, Math.min(WORLD_H - margin, pos.y));
+}
+
+function landmarkById(id) {
+  for (var i = 0; i < LANDMARKS.length; i++) {
+    if (LANDMARKS[i].id === id) return LANDMARKS[i];
+  }
+  return LANDMARKS[0];
+}
+
+function districtAt(x, y) {
+  for (var i = 0; i < DISTRICTS.length; i++) {
+    var d = DISTRICTS[i];
+    if (x >= d.x && x < d.x + d.w && y >= d.y && y < d.y + d.h) return d.name;
+  }
+  return 'Lantern Bay';
 }
