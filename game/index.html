@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Costa Verde — an original 2D top-down open-world crime game. Steal cars, run jobs, dodge the Verde PD.">
+<title>Costa Verde — Open-World Crime Caper</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="600"></canvas>
+  <div id="menu" class="overlay">
+    <h1>COSTA VERDE</h1>
+    <p class="tag">A sun-soaked coastal city. One driver. Three jobs. Zero patience from the police.</p>
+    <p class="story">You are <b>Mara Voss</b>, a getaway driver fresh out of the harbour lockup.
+    Rico, your old fixer, has three jobs lined up — a getaway, a pickup, and one very hot
+    delivery. Take the jobs, keep the cash, and don't let the Verde PD catch you.</p>
+    <div class="controls">
+      <b>Controls</b>
+      <span>WASD / Arrows — move / drive</span>
+      <span>E or Enter — enter / exit a car</span>
+      <span>Mouse click or F — shoot (on foot)</span>
+      <span>Space — punch (on foot)</span>
+      <span>P or Esc — pause</span>
+      <span>M — mute sound</span>
+    </div>
+    <button id="startBtn">START ENGINE</button>
+    <p class="save" id="saveLine"></p>
+  </div>
+  <div id="pauseMenu" class="overlay hidden">
+    <h1>PAUSED</h1>
+    <p>Take a breath. The cops are waiting.</p>
+    <button id="resumeBtn">RESUME</button>
+    <button id="restartBtn">RESTART STORY</button>
+  </div>
+  <div id="busted" class="overlay hidden">
+    <h1>BUSTED</h1>
+    <p id="bustedText">The Verde PD caught up with you.</p>
+    <button id="bustedBtn">BACK ON THE STREETS</button>
+  </div>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>
