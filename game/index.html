@@ -3,50 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
-<title>Lantern Bay — An Open-World Crime Story</title>
-<style>
-  html, body { margin: 0; padding: 0; background: #10131c; height: 100%; overflow: hidden; font-family: monospace, sans-serif; }
-  #wrap { position: relative; width: 1280px; height: 800px; margin: 0 auto; }
-  canvas { display: block; width: 1280px; height: 800px; background: #46683f; }
-  #menu { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(8, 10, 18, 0.72); color: #fff; text-align: center; z-index: 5; }
-  #menu h1 { font-size: 64px; margin: 0; letter-spacing: 6px; color: #ffd94a; text-shadow: 0 4px 0 #7a4a00, 0 8px 24px rgba(0,0,0,0.8); }
-  #menu h2 { font-size: 20px; margin: 8px 0 4px; color: #9fb3d8; letter-spacing: 3px; }
-  #menu p.story { max-width: 640px; font-size: 15px; line-height: 1.6; color: #e8ecf4; }
-  #menu .btns { margin-top: 18px; }
-  #menu button { font-family: monospace; font-size: 18px; padding: 12px 28px; margin: 0 8px; border: 2px solid #ffd94a; background: #1a2030; color: #ffd94a; cursor: pointer; }
-  #menu button:hover { background: #ffd94a; color: #1a2030; }
-  #howto { display: none; max-width: 640px; margin-top: 16px; text-align: left; font-size: 14px; line-height: 1.7; background: rgba(255,255,255,0.08); padding: 12px 18px; border: 1px solid rgba(255,255,255,0.25); }
-  #menu .foot { margin-top: 22px; font-size: 12px; color: #8a93a8; }
-</style>
+<title>Solstice City — an open-world crime game</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" width="1280" height="800"></canvas>
-  <div id="menu">
-    <h1>LANTERN BAY</h1>
-    <h2>AN OPEN-WORLD CRIME STORY</h2>
-    <p class="story">Ezra Cole fixed other people's cars for five years and stayed broke. Tonight the crews of Lantern Bay start paying him to drive, steal and fight instead. Six jobs. One city. No going back.</p>
-    <div class="btns">
-      <button id="newBtn">NEW GAME</button>
-      <button id="continueBtn">CONTINUE</button>
-      <button id="howBtn">HOW TO PLAY</button>
+  <canvas id="game" width="1280" height="720"></canvas>
+  <div id="hud" class="hidden">
+    <div id="hud-left">
+      <div id="cash">$0</div>
+      <div id="healthbar"><div id="healthfill"></div></div>
+      <div id="stars"></div>
     </div>
-    <div id="howto">
-      <b>WASD / arrows</b> — walk or drive &nbsp;•&nbsp; <b>E</b> — steal a car / step out<br>
-      <b>Mouse + click</b> — aim and shoot on foot &nbsp;•&nbsp; <b>R</b> — reload<br>
-      <b>Shift</b> — sprint &nbsp;•&nbsp; <b>P</b> — pause (auto-saves) &nbsp;•&nbsp; <b>M</b> — music on/off<br>
-      Follow the yellow marker: missions pay cash, the police pay attention. Stealing cars and shooting bystanders raise your wanted level. Lose the police to cool down. Progress saves automatically.
+    <div id="hud-right">
+      <div id="clock">DAY 1 · 09:12</div>
+      <div id="speed">0 mph</div>
     </div>
-    <div class="foot">A complete original game — city, story, art and sound made for this entry. No network needed.</div>
+    <div id="objective">Talk to Mama Inez.</div>
+    <canvas id="minimap" width="200" height="150"></canvas>
+    <div id="banner" class="hidden"></div>
+    <div id="hint">WASD move · E steal / exit car · Mouse aim · Click shoot · P pause · M mute</div>
+  </div>
+  <div id="start" class="overlay">
+    <h1>SOLSTICE<br>CITY</h1>
+    <p class="tag">A sun-soaked open-world crime story. All original: one city, one driver, five jobs.</p>
+    <p class="story">Rae Delgado owes the Foundry crew $8,000. Fixer Mama Inez has five jobs that pay it off —
+      if the Solstice police and the Viper gang don't get her first. Steal cars, outrun the law,
+      finish the story.</p>
+    <div class="controls">
+      <span><b>WASD</b> move / drive</span><span><b>E</b> steal &amp; exit car</span>
+      <span><b>Mouse</b> aim</span><span><b>Click</b> shoot</span>
+      <span><b>Shift</b> sprint</span><span><b>P</b> pause</span><span><b>M</b> mute</span>
+    </div>
+    <button id="startbtn">START ENGINE</button>
+    <button id="continuebtn" class="hidden">CONTINUE — DAY <span id="contday">1</span></button>
+    <p class="foot">Original game · No network · Saves on this machine</p>
+  </div>
+  <div id="pause" class="overlay hidden">
+    <h2>PAUSED</h2>
+    <p>Solstice City waits for no one. Except now.</p>
+    <button id="resumebtn">RESUME</button>
+    <button id="restartbtn">RESTART DAY</button>
+  </div>
+  <div id="over" class="overlay hidden">
+    <h2 id="overtitle">BUSTED</h2>
+    <p id="overtext"></p>
+    <button id="retrybtn">TRY AGAIN</button>
   </div>
 </div>
-<script src="src/rng.js"></script>
-<script src="src/city.js"></script>
-<script src="src/audio.js"></script>
-<script src="src/entities.js"></script>
-<script src="src/missions.js"></script>
-<script src="src/hud.js"></script>
-<script src="src/game.js"></script>
+<script src="city.js"></script>
+<script src="traffic.js"></script>
+<script src="police.js"></script>
+<script src="missions.js"></script>
+<script src="hud.js"></script>
+<script src="save.js"></script>
+<script src="audio.js"></script>
+<script src="shots.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
