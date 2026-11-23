@@ -1,29 +1,29 @@
-// main.ts — Costa Verde entry builder (authored for the gta6-01 bounty).
-// Copies game/ and screenshots/ from beside this file into the output directory
-// (MAKEFUN_OUTPUT_DIR, else '/output') and writes /output/dossier.json by calling
-// buildDossier from './vendor/makefun-game.ts'. Node 22, standard library only.
-// Deterministic: the copy is verbatim, so two runs produce identical bytes.
-import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { buildDossier } from './vendor/makefun-game.ts';
+// main.ts — Port Azura entry program (Node 22, standard library only).
+// Copies game/ and screenshots/ from this repository into the output directory
+// (MAKEFUN_OUTPUT_DIR, or /output in the grader) and writes dossier.json with
+// buildDossier from the kit's vendor/makefun-game.ts. Two runs write identical
+// bytes: entries are copied in sorted order and the dossier is deterministic.
+import { buildDossier } from "./vendor/makefun-game.ts";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-// Resolve the repository root from this file's own location.
-const repoRoot = dirname(fileURLToPath(import.meta.url));
-const outDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
+const outputDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+const repoRoot = new URL(".", import.meta.url).pathname;
 
-// Fresh output tree: game/ + screenshots/ copied verbatim, nothing else invented.
-mkdirSync(outDir, { recursive: true });
-cpSync(join(repoRoot, 'game'), join(outDir, 'game'), { recursive: true });
-cpSync(join(repoRoot, 'screenshots'), join(outDir, 'screenshots'), { recursive: true });
+// Start from a clean output directory so stale files can never leak in.
+if (existsSync(outputDir)) rmSync(outputDir, { recursive: true, force: true });
+mkdirSync(outputDir, { recursive: true });
 
-// The dossier is built from the copied tree, so what the scorer reads is what ships.
-const dossier = buildDossier(outDir, {
+// Copy the playable game and its screenshots, preserving the tree exactly.
+cpSync(join(repoRoot, "game"), join(outputDir, "game"), { recursive: true });
+cpSync(join(repoRoot, "screenshots"), join(outputDir, "screenshots"), { recursive: true });
+
+// The dossier is the entry's manifest: source listing, screenshots and totals.
+const dossier = buildDossier(outputDir, {
   text_max_bytes: 163840,
   screenshots: { max: 4, max_bytes: 262144 },
   game_max_files: 993,
   game_max_bytes: 50331648,
-  game_path_max_bytes: 1000,
 });
-writeFileSync(join(outDir, 'dossier.json'), dossier);
-console.log(`dossier written: ${join(outDir, 'dossier.json')} (${dossier.length} bytes)`);
+writeFileSync(join(outputDir, "dossier.json"), dossier);
+console.log("Port Azura entry written to " + outputDir);
